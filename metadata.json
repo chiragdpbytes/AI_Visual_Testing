@@ -1,0 +1,6 @@
+{
+  "name": "AI Frontend Visual QA Platform",
+  "description": "An AI-powered frontend QA platform that compares Figma designs and live website implementations to find alignment, spacing, typography, responsive, and accessibility issues.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

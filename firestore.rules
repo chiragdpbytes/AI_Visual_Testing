@@ -1,0 +1,136 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- REUSABLE SECURITY PRIMITIVES ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.size() > 0 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- SCHEMAS VALIDATION HELPERS ---
+    
+    function isValidUser(data, userId) {
+      return data.userId == userId
+        && data.email is string && data.email.size() <= 256
+        && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 256))
+        && (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 1024));
+    }
+
+    function isValidProject(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 256
+        && data.clientName is string && data.clientName.size() <= 256
+        && data.websiteUrl is string && data.websiteUrl.size() <= 2048
+        && (data.figmaUrl == null || (data.figmaUrl is string && data.figmaUrl.size() <= 2048))
+        && data.environment in ['localhost', 'staging', 'production', 'wordpress', 'static']
+        && data.userId == request.auth.uid;
+    }
+
+    function isValidAnalysisRun(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.projectId is string && data.projectId.size() <= 128
+        && data.status in ['pending', 'completed', 'failed']
+        && data.startedAt is string && data.startedAt.size() <= 128
+        && (data.completedAt == null || (data.completedAt is string && data.completedAt.size() <= 128))
+        && data.designImage is string && data.designImage.size() <= 15000000 // Allow up to ~15MB base64 images
+        && data.siteImage is string && data.siteImage.size() <= 15000000
+        && data.score is number && data.score >= 0 && data.score <= 100
+        && data.issues is list && data.issues.size() <= 200
+        && data.userId == request.auth.uid;
+    }
+
+
+    // --- COLLECTION MATCHES ---
+
+    // 1. Users Profile Collection
+    match /users/{userId} {
+      allow get: if isEmailVerified() && request.auth.uid == userId;
+      
+      allow create: if isEmailVerified()
+        && request.auth.uid == userId
+        && isValidId(userId)
+        && incoming().keys().hasAll(['userId', 'email', 'createdAt'])
+        && incoming().keys().size() >= 3
+        && isValidUser(incoming(), userId)
+        && incoming().createdAt == request.time;
+
+      allow update: if isEmailVerified()
+        && request.auth.uid == userId
+        && isValidUser(incoming(), userId)
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'email']);
+        
+      allow delete: if false; // User accounts are never deleted through the client
+    }
+
+    // 2. Projects Collection
+    match /projects/{projectId} {
+      allow get: if isEmailVerified() && existing().userId == request.auth.uid;
+      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
+
+      allow create: if isEmailVerified()
+        && isValidId(projectId)
+        && incoming().keys().hasAll(['id', 'name', 'clientName', 'websiteUrl', 'environment', 'userId', 'createdAt'])
+        && incoming().keys().size() >= 7
+        && isValidProject(incoming())
+        && incoming().createdAt == request.time;
+
+      allow update: if isEmailVerified()
+        && isValidId(projectId)
+        && existing().userId == request.auth.uid
+        && isValidProject(incoming())
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'clientName', 'websiteUrl', 'figmaUrl', 'environment']);
+
+      allow delete: if isEmailVerified()
+        && isValidId(projectId)
+        && existing().userId == request.auth.uid;
+    }
+
+    // 3. Analysis Runs Collection
+    match /historyRuns/{runId} {
+      allow get: if isEmailVerified() && existing().userId == request.auth.uid;
+      allow list: if isEmailVerified() && resource.data.userId == request.auth.uid;
+
+      allow create: if isEmailVerified()
+        && isValidId(runId)
+        && incoming().keys().hasAll(['id', 'projectId', 'status', 'startedAt', 'designImage', 'siteImage', 'score', 'issues', 'userId'])
+        // completedAt can be present or absent
+        && isValidAnalysisRun(incoming());
+
+      allow update: if isEmailVerified()
+        && isValidId(runId)
+        && existing().userId == request.auth.uid
+        && isValidAnalysisRun(incoming())
+        && incoming().userId == existing().userId
+        && incoming().projectId == existing().projectId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'completedAt', 'score', 'issues', 'error']);
+
+      allow delete: if isEmailVerified()
+        && isValidId(runId)
+        && existing().userId == request.auth.uid;
+    }
+  }
+}
