@@ -2176,8 +2176,8 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                   <div className="flex bg-slate-150/80 p-0.5 rounded-xl border border-slate-200 self-start sm:self-auto shrink-0">
                     <button
                       type="button"
-                      onClick={() => setFigmaMode("url")}
-                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${figmaMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"}`}
+                      // onClick={() => setFigmaMode("url")}
+                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${figmaMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"} cursor-not-allowed pointer-events-none`}
                     >
                       Figma URL
                     </button>
@@ -2337,8 +2337,8 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                   <div className="flex bg-slate-150/80 p-0.5 rounded-xl border border-slate-200 self-start sm:self-auto shrink-0">
                     <button
                       type="button"
-                      onClick={() => setProjectMode("url")}
-                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${projectMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"}`}
+                      // onClick={() => setProjectMode("url")}
+                      className={` px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${projectMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"} cursor-not-allowed pointer-events-none`}
                     >
                       Developed URL
                     </button>
