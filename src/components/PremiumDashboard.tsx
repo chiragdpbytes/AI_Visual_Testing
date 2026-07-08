@@ -1699,6 +1699,60 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
   return (
     <>
       <div className="relative min-h-screen bg-slate-50 text-slate-800 print:hidden">
+        {/* Premium Header Navigation Bar */}
+        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-150 py-3.5 px-4 sm:px-8 shadow-xs no-print">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            {/* Logo & Brand description */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-tr from-slate-900 to-indigo-950 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100/80 transform hover:rotate-3 transition-transform duration-200">
+                <Layers className="text-emerald-400" size={19} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="font-sans font-bold text-base text-slate-900 tracking-tight leading-none">Veloce QA</h1>
+                  <span className="bg-slate-900 text-emerald-400 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-md tracking-wider border border-emerald-500/30">PREMIUM</span>
+                </div>
+                <p className="text-slate-400 text-[10px] sm:text-xs font-medium tracking-wide mt-0.5">Automated Figma design visual quality assurance audits</p>
+              </div>
+            </div>
+
+            {/* Actions & User State */}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-3 text-xs font-sans">
+              
+              {/* Authenticated User Banner */}
+              <div className="flex items-center gap-2 bg-slate-50 pl-2 pr-3 py-1 rounded-xl border border-slate-150 shadow-2xs hover:border-slate-200 transition-colors">
+                {auth.currentUser?.photoURL ? (
+                  <img 
+                    src={auth.currentUser.photoURL} 
+                    alt="avatar" 
+                    referrerPolicy="no-referrer"
+                    className="w-5.5 h-5.5 rounded-full border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-5.5 h-5.5 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-500 shrink-0">
+                    <User size={11} />
+                  </div>
+                )}
+                <span className="text-[11px] font-medium text-slate-700 max-w-[120px] truncate">
+                  {auth.currentUser?.displayName || auth.currentUser?.email?.split("@")[0] || "User"}
+                </span>
+              </div>
+
+              {/* Logout Button */}
+              <button
+                type="button"
+                onClick={() => signOut(auth)}
+                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 rounded-xl border border-rose-100 hover:border-rose-200 transition-all cursor-pointer inline-flex items-center justify-center shadow-2xs"
+                title="Sign Out Account"
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+
+          </div>
+        </header>
+
         {isReuploadModalOpen && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
             <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 space-y-4 shadow-2xl">
@@ -2026,166 +2080,168 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
           </div>
 
           {/* TARGET VIEWPORT RESOLUTION BLOCK & ALL RESOLUTION TOGGLE */}
-          <div className="space-y-4 border-t border-slate-100 pt-5">
-            
-            {/* Resolution Header with Toggle All Switch */}
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </span>
-                  Test Multiple Target Viewport Resolutions
-                </h4>
+          {projectMode === "url" && (
+            <div className="space-y-4 border-t border-slate-100 pt-5">
+              
+              {/* Resolution Header with Toggle All Switch */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    Test Multiple Target Viewport Resolutions
+                  </h4>
 
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">
+                    {analyzeAllResolutions ? "All Breakpoints Enable" : "Manual Selection Unlock"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAnalyzeAllResolutions(!analyzeAllResolutions)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      analyzeAllResolutions ? "bg-emerald-600" : "bg-slate-250"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                        analyzeAllResolutions ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="text-[11px] font-mono font-bold text-slate-500 uppercase">
-                  {analyzeAllResolutions ? "All Breakpoints Enable" : "Manual Selection Unlock"}
-                </span>
+
+              {/* Viewport Selectors Grid */}
+              <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 transition-all duration-300 ${
+                analyzeAllResolutions ? "opacity-45 pointer-events-none pr-none" : "opacity-100"
+              }`}>
+                {/* 4K Button */}
                 <button
                   type="button"
-                  onClick={() => setAnalyzeAllResolutions(!analyzeAllResolutions)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    analyzeAllResolutions ? "bg-emerald-600" : "bg-slate-250"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("4k")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "4k" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
                   }`}
                 >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                      analyzeAllResolutions ? "translate-x-5" : "translate-x-0"
-                    }`}
-                  />
+                  <Monitor size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">4K UHD</span>
+                  <span className="text-[8px] opacity-80 block font-mono">3840px Width</span>
+                </button>
+
+                {/* 1920 Button */}
+                <button
+                  type="button"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("1920")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "1920" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Monitor size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">1080p FHD</span>
+                  <span className="text-[8px] opacity-80 block font-mono">1920px Width</span>
+                </button>
+
+                {/* 1536 Button */}
+                <button
+                  type="button"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("1536")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "1536" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Laptop size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">QHD Viewport</span>
+                  <span className="text-[8px] opacity-80 block font-mono">1536px Width</span>
+                </button>
+
+                {/* 1440 Button */}
+                <button
+                  type="button"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("1440")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "1440" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Laptop size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">WQXGA Layout</span>
+                  <span className="text-[8px] opacity-80 block font-mono">1440px Width</span>
+                </button>
+
+                {/* 1366 Button */}
+                <button
+                  type="button"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("1366")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "1366" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Laptop size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">Standard HD+</span>
+                  <span className="text-[8px] opacity-80 block font-mono">1366px Width</span>
+                </button>
+
+                {/* 1280 Button */}
+                <button
+                  type="button"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("1280")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "1280" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Tablet size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">WXGA Screen</span>
+                  <span className="text-[8px] opacity-80 block font-mono">1280px Width</span>
+                </button>
+
+                {/* 1024 Button */}
+                <button
+                  type="button"
+                  disabled={analyzeAllResolutions}
+                  onClick={() => setResolution("1024")}
+                  className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
+                    resolution === "1024" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
+                  }`}
+                >
+                  <Tablet size={14} className="mb-1" />
+                  <span className="text-[10px] font-bold block">XGA Monitor</span>
+                  <span className="text-[8px] opacity-80 block font-mono">1024px Width</span>
                 </button>
               </div>
+
+              {!analyzeAllResolutions && resolution === "custom" && (
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-150 flex items-center gap-4 animate-slide-up">
+                  <span className="text-xs font-mono text-slate-500 shrink-0">Width: {customWidth}px</span>
+                  <input
+                    type="range"
+                    min="320"
+                    max="1920"
+                    step="20"
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(parseInt(e.target.value))}
+                    className="flex-1 accent-emerald-600 h-1"
+                  />
+                  <input
+                    type="number"
+                    min="320"
+                    max="1920"
+                    value={customWidth}
+                    onChange={(e) => setCustomWidth(parseInt(e.target.value) || 1280)}
+                    className="w-20 bg-white text-xs border rounded-lg p-1.5 focus:outline-none focus:border-emerald-500 text-center"
+                  />
+                </div>
+              )}
             </div>
-
-            {/* Viewport Selectors Grid */}
-            <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5 transition-all duration-300 ${
-              analyzeAllResolutions ? "opacity-45 pointer-events-none pr-none" : "opacity-100"
-            }`}>
-              {/* 4K Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("4k")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "4k" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Monitor size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">4K UHD</span>
-                <span className="text-[8px] opacity-80 block font-mono">3840px Width</span>
-              </button>
-
-              {/* 1920 Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("1920")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "1920" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Monitor size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">1080p FHD</span>
-                <span className="text-[8px] opacity-80 block font-mono">1920px Width</span>
-              </button>
-
-              {/* 1536 Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("1536")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "1536" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Laptop size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">QHD Viewport</span>
-                <span className="text-[8px] opacity-80 block font-mono">1536px Width</span>
-              </button>
-
-              {/* 1440 Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("1440")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "1440" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Laptop size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">WQXGA Layout</span>
-                <span className="text-[8px] opacity-80 block font-mono">1440px Width</span>
-              </button>
-
-              {/* 1366 Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("1366")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "1366" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Laptop size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">Standard HD+</span>
-                <span className="text-[8px] opacity-80 block font-mono">1366px Width</span>
-              </button>
-
-              {/* 1280 Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("1280")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "1280" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Tablet size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">WXGA Screen</span>
-                <span className="text-[8px] opacity-80 block font-mono">1280px Width</span>
-              </button>
-
-              {/* 1024 Button */}
-              <button
-                type="button"
-                disabled={analyzeAllResolutions}
-                onClick={() => setResolution("1024")}
-                className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center border-none ${
-                  resolution === "1024" && !analyzeAllResolutions ? "bg-emerald-600 text-white shadow-xs font-black" : "bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600"
-                }`}
-              >
-                <Tablet size={14} className="mb-1" />
-                <span className="text-[10px] font-bold block">XGA Monitor</span>
-                <span className="text-[8px] opacity-80 block font-mono">1024px Width</span>
-              </button>
-            </div>
-
-            {!analyzeAllResolutions && resolution === "custom" && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-150 flex items-center gap-4 animate-slide-up">
-                <span className="text-xs font-mono text-slate-500 shrink-0">Width: {customWidth}px</span>
-                <input
-                  type="range"
-                  min="320"
-                  max="1920"
-                  step="20"
-                  value={customWidth}
-                  onChange={(e) => setCustomWidth(parseInt(e.target.value))}
-                  className="flex-1 accent-emerald-600 h-1"
-                />
-                <input
-                  type="number"
-                  min="320"
-                  max="1920"
-                  value={customWidth}
-                  onChange={(e) => setCustomWidth(parseInt(e.target.value) || 1280)}
-                  className="w-20 bg-white text-xs border rounded-lg p-1.5 focus:outline-none focus:border-emerald-500 text-center"
-                />
-              </div>
-            )}
-          </div>
+          )}
 
           {/* TIMELINE LOADER ACTIONS & LAUNCHER */}
           <div className="space-y-4 pt-4 border-t border-slate-100">
