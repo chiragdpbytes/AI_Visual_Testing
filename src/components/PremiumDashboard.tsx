@@ -1936,6 +1936,60 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
   return (
     <>
       <div className="relative min-h-screen bg-slate-50 text-slate-800 print:hidden">
+        {/* Premium Header Navigation Bar */}
+        <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-100 py-3.5 px-4 sm:px-8 shadow-xs no-print">
+          <div className="mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+
+            {/* Logo & Brand description */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-tr from-slate-900 to-indigo-950 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100/80 transform hover:rotate-3 transition-transform duration-200">
+                <Layers className="text-emerald-400" size={19} />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="font-sans font-bold text-base text-slate-900 tracking-tight leading-none">Veloce QA</h1>
+                </div>
+                <p className="text-slate-400 text-[10px] sm:text-xs font-medium tracking-wide mt-0.5">Automated Figma design visual quality assurance audits</p>
+              </div>
+            </div>
+
+            {/* Actions & User State */}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 sm:gap-3 text-xs font-sans">
+
+              {/* Authenticated User Banner */}
+              <div className="flex items-center gap-2 bg-slate-50 pl-2 pr-3 py-1 rounded-xl border border-slate-150 shadow-2xs hover:border-slate-200 transition-colors">
+                {auth.currentUser?.photoURL ? (
+                  <img
+                    src={auth.currentUser.photoURL}
+                    alt="avatar"
+                    referrerPolicy="no-referrer"
+                    className="w-5.5 h-5.5 rounded-full border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-5.5 h-5.5 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-500 shrink-0">
+                    <User size={11} />
+                  </div>
+                )}
+                <span className="text-[11px] font-medium text-slate-700 max-w-[120px] truncate">
+                  {auth.currentUser?.displayName || auth.currentUser?.email?.split("@")[0] || "User"}
+                </span>
+              </div>
+
+              {/* Logout Button */}
+              <button
+                type="button"
+                onClick={() => signOut(auth)}
+                className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-bold rounded-xl border border-rose-150 hover:border-rose-200 transition-all cursor-pointer"
+                title="Sign Out Account"
+              >
+                <LogOut size={13} />
+                <span>Logout</span>
+              </button>
+            </div>
+
+          </div>
+        </header>
+
         {isReuploadModalOpen && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
             <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 space-y-4 shadow-2xl">
@@ -1973,48 +2027,12 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
           </div>
         )}
 
-
-        {/* HEADER CARD (EXTRACTED FROM WORKSPACE CARD) */}
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-          <div className="bg-white border border-slate-200 rounded-3xl shadow-xs p-6 animate-fade-in">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                {/* <div className="flex items-center gap-2">
-                  <span className="text-[9px] uppercase font-mono tracking-widest text-emerald-700 font-extrabold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/50">
-                    STAGE 01
-                  </span>
-                  <span className="bg-emerald-600 w-1.5 h-1.5 rounded-full"></span>
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">
-                    WORKSPACE CONTROLS
-                  </span>
-                </div> */}
-                <h2 className="font-display font-black text-slate-800 text-xl tracking-tight ">
-                  Visual QA Audit
-                </h2>
-                <p className="text-slate-450 text-xs mt-0.5">
-                  Automated Figma design visual quality assurance audits
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => signOut(auth)}
-                className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 hover:text-rose-700 text-xs font-bold rounded-xl border border-rose-150 hover:border-rose-200 transition-all cursor-pointer"
-                title="Sign out of your account"
-              >
-                <LogOut size={13} />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* RECENT AUDITS CARD + UPLOAD/WORKSPACE CARD (SHARED 50/50 TWO-COLUMN WRAPPER) */}
         <div className="mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-20 grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
           <div id="comparative-archives-card" className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xl shadow-slate-200/45 space-y-6 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/55 border-t-4 border-t-emerald-600 relative overflow-hidden">
-            <div className="!hidden flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <h3 className="font-display font-bold text-slate-800 text-lg tracking-tight">Recent Audits <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{historyRuns.filter(r => !r.archived).length} Active</span></h3>
-              {/* <div className="flex items-center gap-2">
-
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => uploadSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
@@ -2023,7 +2041,7 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                   <Plus size={13} />
                   <span>Verify New</span>
                 </button>
-              </div> */}
+              </div>
             </div>
 
             {historyRuns.filter(r => !r.archived).length === 0 ? (
@@ -2587,7 +2605,7 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
               {fallbackInfo && <FallbackBanner reason={fallbackInfo.reason} />}
 
               {captureError && (
-                <div className="w-full bg-rose-500/15 border border-rose-500/60 text-rose-200 rounded-xl px-4 py-3 text-xs font-semibold">
+                <div className="w-full bg-rose-50 border border-rose-500/60 text-rose-500/60 rounded-xl px-4 py-3 text-xs font-semibold">
                   Capture failed: {captureError}
                 </div>
               )}
