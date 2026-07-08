@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { Project, SeverityType, CategoryType, Issue, AnalysisRun } from "./src/types";
+import { parseImageDimensions } from "./server/imageMeta";
+import { processIssues } from "./server/issueProcessing";
+import { captureWebsite } from "./server/capture";
 
 dotenv.config();
 
@@ -182,57 +185,20 @@ app.post("/api/capture", async (req, res) => {
       }
     }
 
-    let targetScreenshotUrl = "";
-    if (url.includes("figma.com")) {
-      targetScreenshotUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
-    } else {
-      // Use thum.io first for standard staging/production URLs
-      const cleanUrl = url.startsWith("http") ? url : `https://${url}`;
-      targetScreenshotUrl = `https://image.thum.io/get/width/1280/crop/1000/maxAge/12/${cleanUrl}`;
-    }
+  } catch (figmaOuterErr: any) {
+    console.error(`[Capture Controller] Unexpected error while evaluating Figma API branch for ${url}:`, figmaOuterErr.message);
+  }
 
-    console.log(`[Capture Controller] Downloading screenshot stream: ${targetScreenshotUrl}`);
-    
-    // We fetch the screenshot from the service
-    const response = await fetch(targetScreenshotUrl);
-    if (!response.ok) {
-      throw new Error(`Rendering service returned status: ${response.status}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
-    
-    return res.json({ 
-      success: true, 
-      base64Image,
-      sourceUrl: url
-    });
+  try {
+    const cleanUrl = url.startsWith("http") ? url : `https://${url}`;
+    const { width } = req.body;
+    console.log(`[Capture Controller] Playwright capturing ${cleanUrl} at width ${width || 1280}...`);
+    const base64Image = await captureWebsite(cleanUrl, width);
+    return res.json({ success: true, base64Image, sourceUrl: url });
   } catch (error: any) {
-    console.error(`[Capture Controller] Screenshot capture failed for ${url}:`, error.message);
-    
-    // Fallback: If capture fails, attempt using Microlink backup
-    try {
-      console.log(`[Capture Controller] Retrying screenshot capture using Microlink backup for ${url}...`);
-      const cleanBackupUrl = url.startsWith("http") ? url : `https://${url}`;
-      const backupUrl = `https://api.microlink.io/?url=${encodeURIComponent(cleanBackupUrl)}&screenshot=true&embed=screenshot.url`;
-      const response = await fetch(backupUrl);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const base64Image = `data:image/png;base64,${buffer.toString("base64")}`;
-        return res.json({
-          success: true,
-          base64Image,
-          sourceUrl: url
-        });
-      }
-    } catch (nestedErr: any) {
-      console.error(`[Capture Controller] Backup screenshot capture failed too:`, nestedErr.message);
-    }
-
-    return res.status(500).json({ 
-      error: `Failed to capture screenshot: ${error.message}` 
+    console.error(`[Capture Controller] Playwright capture failed for ${url}:`, error.message);
+    return res.status(502).json({
+      error: `Failed to capture ${url}: ${error.message}. Check the URL is reachable from this machine.`
     });
   }
 });
@@ -351,7 +317,9 @@ app.post("/api/analyze", async (req, res) => {
       designImage,
       siteImage,
       score: mockScore,
-      issues: mockIssues
+      issues: mockIssues,
+      isFallback: true,
+      fallbackReason: !client ? "missing_api_key" : "demo_requested",
     };
 
     analysisHistory.unshift(completedRun);
@@ -383,42 +351,48 @@ app.post("/api/analyze", async (req, res) => {
       },
     };
 
+    const designDims = parseImageDimensions(designPart.data, designPart.mimeType);
+    const siteDims = parseImageDimensions(sitePart.data, sitePart.mimeType);
+    const widthsDiffer =
+      designDims && siteDims && Math.abs(designDims.width - siteDims.width) / designDims.width > 0.05;
+    const dimsNote =
+      designDims && siteDims
+        ? `Image 1 (design) is ${designDims.width}x${designDims.height}px; Image 2 (developed build) is ${siteDims.width}x${siteDims.height}px. The images may differ in scale or aspect ratio — do NOT report scaling, cropping, or resolution artifacts as issues.${
+            widthsDiffer
+              ? ` IMPORTANT: the two images have meaningfully different pixel widths, so they likely come from DIFFERENT RESPONSIVE BREAKPOINTS. Spacing, wrapping, clustering, and column-count differences attributable to responsive behavior are NOT bugs — do not report them. Content differences (different text, missing/added sections, wrong colors) are still real issues.`
+              : ""
+          }`
+        : `The images may differ in scale or aspect ratio — do NOT report scaling, cropping, or resolution artifacts as issues.`;
+
     const promptText = `
-You are the world's most advanced AI Frontend Visual QA Platform.
-Contrast original design and actual website look to identify design bugs.
+You are an expert frontend visual QA auditor. Image 1 is the design mockup (source of truth). Image 2 is the developed build. Find real, visible discrepancies where the build deviates from the design.
 
-We have attached two drawings:
-- Image 1 is the Figma Design Mockup (the Design Source reference).
-- Image 2 is the Live Website Implementation (the Developed build).
+${dimsNote}
 
-INSTRUCTIONS FOR COMPARISON ACCURACY:
-1. Double-check before declaring a section "absent" or "missing". If a section, header, or element with the same or similar title/content (e.g. "Meals That Work for You") is present in both images but has different styles, layouts, or placeholder images, classify it as a styling, content, or layout discrepancy, NOT as missing or completely absent! Only claim something is missing if it is truly, 100% physically absent from the developed build.
-2. Spot real, detailed visual gaps such as:
-   - Layout & Grid mismatches (different image grids, column wraps, asymmetric alignment, cards flat vs floating).
-   - Spacing & Margin mismatch (too much or too little padding, margins that push items too low/high).
-   - Typography mismatch (font-weight differences, size differences, text wrap/line breaks differences).
-   - Color mismatch (differing colors, missing brand gradients, wrong border colors, low-contrast text).
-3. Position accuracy: Ensure that coordinates ("xPercent" and "yPercent") are extremely precise. Calculate the coordinates as values between 0 and 100 representing the exact center point of the visual error on Image 2 (the Live Website Implementation).
-4. Do not hallucinate errors. Only raise actual, visible differences. Keep your explanations factual, concise, and focused on user experience.
+Perform these comparison passes IN ORDER and report findings from each:
 
-Return your list strictly in a JSON response following this JSON schema:
-{
-  "score": 85, // Integer 0-100 indicating quality match. 100 = identical, <70 = severely broken.
-  "issues": [
-    {
-      "severity": "critical" | "major" | "minor" | "suggestion",
-      "category": "layout" | "typography" | "color" | "accessibility" | "custom",
-      "title": "Short descriptive error title",
-      "description": "Provide a high-fidelity explanation of what changed, why it matters, UX friction impact, and probable layout cause.",
-      "xPercent": 50, // Approximation coordinate (0-100) on horizontal axis where this visual bug is centered in the image.
-      "yPercent": 35, // Approximation coordinate (0-100) on vertical axis where this visual bug is centered in the image.
-      "cssSuggestion": "Standard CSS block targeting the bug with fixing attributes (like .cta-bar { gap: 16px })",
-      "estimatedImpact": "Short description of user-facing consequence."
-    }
-  ]
-}
+PASS 1 — TEXT CONTENT: Read every piece of text in BOTH images character by character. Report any text that is missing, truncated, added, or changed in the build (category "typography", usually severity "critical" — wrong content misrepresents the product).
+PASS 2 — LAYOUT & POSITION: Sections, grids, columns, alignment, element order, missing/moved components (category "layout").
+PASS 3 — SPACING: Padding, margins, gaps that clearly differ (category "layout").
+PASS 4 — TYPOGRAPHY STYLE: Font weight, size, line breaks, letter case (category "typography").
+PASS 5 — COLOR & BRAND: Colors, gradients, borders, shadows that differ (category "color").
+PASS 6 — ACCESSIBILITY: Low-contrast text, touch targets that shrank below ~44px equivalent (category "accessibility").
 
-Ensure the response contains ONLY standard, valid parseable JSON. No backticks block wrapper, no leading explanation text, just the raw JSON structure!
+EVIDENCE RULE (critical): For every issue you MUST fill "designEvidence" (what Image 1 concretely shows) and "siteEvidence" (what Image 2 concretely shows instead). Evidence must name SPECIFIC elements, text, or values (e.g. "the 'Get Started' button is 40px tall", "nav shows 'Shop' instead of 'Order'"). Vague comparative claims with no identifiable element ("spacing looks different", "items are clustered differently") are NOT evidence — omit such issues entirely. If you cannot state both sides from what is visibly in the images, DO NOT report the issue. Never guess or infer beyond what is visible.
+
+INTERACTIVE STATE RULE: Screenshots freeze one moment of an interactive page. Do NOT report differences caused by interaction state rather than implementation: selected/hover/focus/expanded states shown in the design but not triggered in the capture (or vice versa), carousel/slider positions, countdown timer values, chat/support widgets, cookie banners, and animation mid-states. Only report a state-related difference if the page's DEFAULT untouched state visibly contradicts the design.
+
+SEVERITY RUBRIC:
+- "critical": wrong/missing content, or layout broken enough to mislead users
+- "major": clearly off-spec visual difference a stakeholder would flag
+- "minor": subtle deviation most users would not notice
+- "suggestion": improvement idea, not a spec violation
+
+SCORE RUBRIC: Start at 100. Deduct roughly 15 per critical, 8 per major, 3 per minor, 1 per suggestion. Floor at 0. If the images are essentially identical, return 100 and an empty issues array.
+
+COORDINATES: "xPercent"/"yPercent" are 0-100 positions of the issue's center ON IMAGE 2.
+
+Return ONLY valid JSON matching the response schema.
 `;
 
     let response: any = null;
@@ -426,9 +400,9 @@ Ensure the response contains ONLY standard, valid parseable JSON. No backticks b
     const maxAttempts = 5;
     let currentDelay = 1200; // Start with 1.2s initial wait
     const modelsToTry = [
+      "gemini-3.1-pro-preview",
       "gemini-3.5-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-pro-preview"
+      "gemini-3.1-flash-lite"
     ];
 
     while (attempts < maxAttempts) {
@@ -443,6 +417,7 @@ Ensure the response contains ONLY standard, valid parseable JSON. No backticks b
             { text: promptText }
           ].filter(Boolean),
           config: {
+            temperature: 0,
             responseMimeType: "application/json",
             responseSchema: {
               type: Type.OBJECT,
@@ -478,9 +453,17 @@ Ensure the response contains ONLY standard, valid parseable JSON. No backticks b
                         type: Type.STRING,
                         description: "Actionable corrective CSS styling lines to assist dev fix."
                       },
-                      estimatedImpact: { type: Type.STRING }
+                      estimatedImpact: { type: Type.STRING },
+                      designEvidence: {
+                        type: Type.STRING,
+                        description: "What the design mockup (Image 1) concretely shows at this location."
+                      },
+                      siteEvidence: {
+                        type: Type.STRING,
+                        description: "What the developed build (Image 2) concretely shows instead."
+                      }
                     },
-                    required: ["severity", "category", "title", "description", "xPercent", "yPercent"]
+                    required: ["severity", "category", "title", "description", "xPercent", "yPercent", "designEvidence", "siteEvidence"]
                   }
                 }
               },
@@ -519,14 +502,7 @@ Ensure the response contains ONLY standard, valid parseable JSON. No backticks b
     }
 
     // Assign IDs to issue items
-    const verifiedIssues = (parsedData.issues || []).map((iss: any, idx: number) => ({
-      ...iss,
-      id: `iss-${runId}-${idx}`,
-      severity: ["critical", "major", "minor", "suggestion"].includes(iss.severity) ? iss.severity : "minor",
-      category: ["layout", "typography", "color", "accessibility", "custom"].includes(iss.category) ? iss.category : "layout",
-      xPercent: typeof iss.xPercent === "number" ? Math.min(Math.max(iss.xPercent, 0), 100) : 50,
-      yPercent: typeof iss.yPercent === "number" ? Math.min(Math.max(iss.yPercent, 0), 100) : 50,
-    }));
+    const verifiedIssues = processIssues(parsedData.issues || [], runId);
 
     const completedRun: AnalysisRun = {
       id: runId,
@@ -537,7 +513,8 @@ Ensure the response contains ONLY standard, valid parseable JSON. No backticks b
       designImage,
       siteImage,
       score: typeof parsedData.score === "number" ? parsedData.score : 80,
-      issues: verifiedIssues
+      issues: verifiedIssues,
+      isFallback: false,
     };
 
     analysisHistory.unshift(completedRun);
@@ -631,7 +608,9 @@ Ensure the response contains ONLY standard, valid parseable JSON. No backticks b
       designImage,
       siteImage,
       score: fallbackScore,
-      issues: fallbackIssues
+      issues: fallbackIssues,
+      isFallback: true,
+      fallbackReason: "api_error",
     };
 
     analysisHistory.unshift(fallbackRun);

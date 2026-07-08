@@ -16,7 +16,11 @@ export default defineConfig(() => {
       // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
-      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      // Ignore tooling artifact folders so Playwright screenshots/scratch files don't trigger reloads.
+      watch:
+        process.env.DISABLE_HMR === 'true'
+          ? null
+          : {ignored: ['**/.playwright-mcp/**', '**/.superpowers/**']},
     },
   };
 });

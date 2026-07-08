@@ -21,6 +21,8 @@ export interface Issue {
   yPercent: number; // For plotting Pin (0-100)
   cssSuggestion?: string;
   estimatedImpact?: string;
+  designEvidence?: string; // What the design image concretely shows at this location
+  siteEvidence?: string;   // What the developed build concretely shows instead
 }
 
 export interface AnalysisRun {
@@ -34,6 +36,8 @@ export interface AnalysisRun {
   score: number; // 0-100 score representing similarity / visual consistency
   issues: Issue[];
   error?: string;
+  isFallback?: boolean; // true when this run is canned demo data, not real Gemini output
+  fallbackReason?: "missing_api_key" | "api_error" | "demo_requested";
 }
 
 export interface PresetCase {
@@ -45,4 +49,15 @@ export interface PresetCase {
   siteImage: string; // Full high-quality placeholder base64/SVG or relative path
   score: number;
   issues: Issue[];
+}
+
+export interface ComparisonSetup {
+  id: string;
+  name: string;
+  figmaImageBase64: string; // data URL of the saved design reference
+  devUrl: string;
+  environmentLabel: "local" | "staging" | "production";
+  viewportWidth: number;
+  createdAt: string;
+  lastSyncedAt?: string;
 }
