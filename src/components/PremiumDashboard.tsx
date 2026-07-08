@@ -2738,8 +2738,8 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                 {/* Export Menu Dropdown */}
                 <button
                   type="button"
-                  onClick={() => setIsReuploadModalOpen(true)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 font-bold rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm border border-slate-700"
+                  // onClick={() => setIsReuploadModalOpen(true)}
+                  className="cursor-not-allowed pointer-events-none px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 font-bold rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm border border-slate-700"
                 >
                   <Upload size={13} />
                   <span>Re-upload</span>
