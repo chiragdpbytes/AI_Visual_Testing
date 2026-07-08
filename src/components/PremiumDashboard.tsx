@@ -2032,17 +2032,17 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
           <div id="comparative-archives-card" className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xl shadow-slate-200/45 space-y-6 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/55 border-t-4 border-t-emerald-600 relative overflow-hidden">
             <div className="flex items-center justify-between">
               <h3 className="font-display font-bold text-slate-800 text-lg tracking-tight">Recent Audits <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{historyRuns.filter(r => !r.archived).length} Active</span></h3>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => uploadSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
-                  className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl px-4 py-2 border-none cursor-pointer transition-all"
-                >
-                  <Plus size={13} />
-                  <span>Verify New</span>
-                </button>
-              </div>
             </div>
+            {/* <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => uploadSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl px-4 py-2 border-none cursor-pointer transition-all"
+              >
+                <Plus size={13} />
+                <span>Verify New</span>
+              </button>
+            </div> */}
 
             {historyRuns.filter(r => !r.archived).length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-4">No comparisons yet — verify your first build below.</p>
@@ -2176,8 +2176,9 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                   <div className="flex bg-slate-150/80 p-0.5 rounded-xl border border-slate-200 self-start sm:self-auto shrink-0">
                     <button
                       type="button"
+                      title="coming soon"
                       // onClick={() => setFigmaMode("url")}
-                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${figmaMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"} cursor-not-allowed pointer-events-none`}
+                      className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${figmaMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"} cursor-not-allowed opacity-50`}
                     >
                       Figma URL
                     </button>
@@ -2337,8 +2338,9 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                   <div className="flex bg-slate-150/80 p-0.5 rounded-xl border border-slate-200 self-start sm:self-auto shrink-0">
                     <button
                       type="button"
+                      title="coming soon"
                       // onClick={() => setProjectMode("url")}
-                      className={` px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${projectMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"} cursor-not-allowed pointer-events-none`}
+                      className={` px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all border-none ${projectMode === "url" ? "bg-white text-slate-8 w-max shadow-2xs font-extrabold" : "text-slate-500 hover:text-slate-800"} cursor-not-allowed opacity-50`}
                     >
                       Developed URL
                     </button>
@@ -2738,8 +2740,9 @@ export default function PremiumDashboard({ onToggleDemo1 }: PremiumDashboardProp
                 {/* Export Menu Dropdown */}
                 <button
                   type="button"
+                  title="coming soon"
                   // onClick={() => setIsReuploadModalOpen(true)}
-                  className="cursor-not-allowed pointer-events-none px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 font-bold rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm border border-slate-700"
+                  className=" px-3 py-1.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 font-bold rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shadow-sm border border-slate-700 !cursor-not-allowed !opacity-50"
                 >
                   <Upload size={13} />
                   <span>Re-upload</span>
