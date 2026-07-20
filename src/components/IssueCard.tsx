@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AlertTriangle, Check, Copy, Code, Sparkles, Accessibility } from "lucide-react";
+import { AlertTriangle, Check, Copy, Code, Sparkles, Accessibility, Ruler } from "lucide-react";
 import { Issue, SeverityType, CategoryType } from "../types";
 
 interface IssueCardProps {
@@ -55,6 +55,8 @@ export default function IssueCard({ issue, index, isSelected, onSelect }: IssueC
         return <div className="w-3 h-3 rounded-full bg-indigo-500" />;
       case "layout":
         return <Sparkles size={13} className="text-pink-500" />;
+      case "spacing":
+        return <Ruler size={13} className="text-amber-500" />;
       default:
         return <Code size={13} className="text-slate-500" />;
     }

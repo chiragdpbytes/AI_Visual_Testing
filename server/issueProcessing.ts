@@ -1,7 +1,7 @@
 import { Issue, SeverityType, CategoryType } from "../src/types";
 
 const SEVERITIES: SeverityType[] = ["critical", "major", "minor", "suggestion"];
-const CATEGORIES: CategoryType[] = ["layout", "typography", "color", "accessibility", "custom"];
+const CATEGORIES: CategoryType[] = ["layout", "typography", "color", "spacing", "accessibility", "custom"];
 // Higher index = more severe, for dedup comparisons
 const SEVERITY_RANK: Record<SeverityType, number> = {
   suggestion: 0,

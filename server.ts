@@ -298,7 +298,7 @@ app.post("/api/analyze", async (req, res) => {
           {
             id: `iss-m7-${Date.now()}`,
             severity: "critical",
-            category: "layout",
+            category: "spacing",
             title: "Metric Cards Grid Symmetry Defect",
             description: "Due to uneven column spacing gaps, the grid is asymmetrical and shifted upwards 10px. Spacing offsets break visual coherence.",
             xPercent: 50,
@@ -371,16 +371,19 @@ ${dimsNote}
 
 Perform these comparison passes IN ORDER and report findings from each:
 
-PASS 1 — TEXT CONTENT: Read every piece of text in BOTH images character by character. Report any text that is missing, truncated, added, or changed in the build (category "typography", usually severity "critical" — wrong content misrepresents the product).
-PASS 2 — LAYOUT & POSITION: Sections, grids, columns, alignment, element order, missing/moved components (category "layout").
-PASS 3 — SPACING: Padding, margins, gaps that clearly differ (category "layout").
-PASS 4 — TYPOGRAPHY STYLE: Font weight, size, line breaks, letter case (category "typography").
-PASS 5 — COLOR & BRAND: Colors, gradients, borders, shadows that differ (category "color").
-PASS 6 — ACCESSIBILITY: Low-contrast text, touch targets that shrank below ~44px equivalent (category "accessibility").
+PASS 1 — TEXT CONTENT: Read every piece of text in BOTH images character by character, including every navigation menu label/link, button label, and paragraph. Report any text that is missing, truncated, added, changed, or reordered in the build (category "typography", usually severity "critical" — wrong content misrepresents the product). Explicitly enumerate the navigation links in each image and flag any that were added, removed, or reordered.
+PASS 2 — PRESENCE: For every distinct section, component, icon, button, paragraph, or floating element (e.g. chat widgets, badges, tooltips, side tabs) that appears in ONE image but is completely absent from the other, report it — even if a nearby region already has other issues reported. Do not let issues clustered in one visually busy area crowd out a clearly missing or clearly added element elsewhere on the page (category "layout", usually severity "critical").
+PASS 3 — LAYOUT & POSITION: Sections, grids, columns, alignment, element order (category "layout").
+PASS 4 — SPACING: Padding, margins, gaps that clearly differ (category "spacing"). State the approximate gap in both images (e.g. "design ~24px, build ~8px") — do not just say spacing "looks" different.
+PASS 5 — TYPOGRAPHY STYLE: Font weight, size, line breaks, letter case (category "typography").
+PASS 6 — COLOR & BRAND: Colors, gradients, borders, shadows that differ (category "color").
+PASS 7 — ACCESSIBILITY: Low-contrast text, touch targets that shrank below ~44px equivalent (category "accessibility").
 
-EVIDENCE RULE (critical): For every issue you MUST fill "designEvidence" (what Image 1 concretely shows) and "siteEvidence" (what Image 2 concretely shows instead). Evidence must name SPECIFIC elements, text, or values (e.g. "the 'Get Started' button is 40px tall", "nav shows 'Shop' instead of 'Order'"). Vague comparative claims with no identifiable element ("spacing looks different", "items are clustered differently") are NOT evidence — omit such issues entirely. If you cannot state both sides from what is visibly in the images, DO NOT report the issue. Never guess or infer beyond what is visible.
+COMPLETENESS RULE: When many differences exist, prioritize breadth over depth — report each genuinely distinct missing/added/wrong element once, across the WHOLE page, before spending multiple issues detailing several subtle variations within a single crowded region. Do not let one visually busy cluster (e.g. a composite illustration or dashboard mockup graphic) consume most of your issue budget while an obvious miss elsewhere (a removed nav link, a missing paragraph, an added element) goes unreported.
 
-INTERACTIVE STATE RULE: Screenshots freeze one moment of an interactive page. Do NOT report differences caused by interaction state rather than implementation: selected/hover/focus/expanded states shown in the design but not triggered in the capture (or vice versa), carousel/slider positions, countdown timer values, chat/support widgets, cookie banners, and animation mid-states. Only report a state-related difference if the page's DEFAULT untouched state visibly contradicts the design.
+EVIDENCE RULE (critical): For every issue you MUST fill "designEvidence" (what Image 1 concretely shows) and "siteEvidence" (what Image 2 concretely shows instead). Evidence must name SPECIFIC elements, text, or values (e.g. "the 'Get Started' button is 40px tall", "nav shows 'Shop' instead of 'Order'"). Vague comparative claims with no identifiable element ("spacing looks different", "items are clustered differently") are NOT evidence — omit such issues entirely. Exception for spacing: an approximate gap comparison ("design gap looks like ~24px, build gap looks like ~8px") IS valid evidence even without an exact pixel ruler — state your best visual estimate for both images. Only omit spacing findings that give no estimate at all on either side. If you cannot state both sides from what is visibly in the images, DO NOT report the issue. Never guess or infer beyond what is visible.
+
+INTERACTIVE STATE RULE: Screenshots freeze one moment of an interactive page. Do NOT report differences caused by interaction state rather than implementation: selected/hover/focus/expanded states shown in the design but not triggered in the capture (or vice versa), carousel/slider positions, countdown timer values, cookie banners, and animation mid-states. This rule covers STATE differences only — a widget, badge, or icon that is completely absent in one image (not merely open/closed/collapsed differently) is a PRESENCE difference and MUST be reported per PASS 2. Only skip a chat/support widget or similar floating element if it is present in both images but shown in a different interaction state.
 
 SEVERITY RUBRIC:
 - "critical": wrong/missing content, or layout broken enough to mislead users
@@ -437,7 +440,7 @@ Return ONLY valid JSON matching the response schema.
                       },
                       category: {
                         type: Type.STRING,
-                        description: "Issue categorization: layout, typography, color, accessibility, custom."
+                        description: "Issue categorization: layout, typography, color, spacing, accessibility, custom."
                       },
                       title: { type: Type.STRING },
                       description: { type: Type.STRING },
@@ -636,9 +639,21 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 AI Frontend Visual QA Server is booted on http://localhost:${PORT}`);
-  });
+  const MAX_PORT_ATTEMPTS = 10;
+  const listenWithFallback = (port: number, attemptsLeft: number) => {
+    const server = app.listen(port, "0.0.0.0", () => {
+      console.log(`🚀 AI Frontend Visual QA Server is booted on http://localhost:${port}`);
+    });
+    server.on("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE" && attemptsLeft > 0) {
+        console.warn(`⚠️  Port ${port} is already in use, trying port ${port + 1}...`);
+        listenWithFallback(port + 1, attemptsLeft - 1);
+      } else {
+        throw err;
+      }
+    });
+  };
+  listenWithFallback(PORT, MAX_PORT_ATTEMPTS);
 }
 
 startServer();

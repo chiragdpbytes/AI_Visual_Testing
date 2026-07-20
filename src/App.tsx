@@ -20,6 +20,7 @@ import {
   LogOut,
   User as UserIcon
 } from "lucide-react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Project, Issue, AnalysisRun } from "./types";
 import ProjectForm from "./components/ProjectForm";
 import CompareCanvas from "./components/CompareCanvas";
@@ -28,6 +29,7 @@ import PresetSelector from "./components/PresetSelector";
 import ReportStats from "./components/ReportStats";
 import { presetCatalog } from "./presets";
 import PremiumDashboard from "./components/PremiumDashboard";
+import AuditPage from "./components/AuditPage";
 import ConfirmationModal from "./components/ConfirmationModal";
 import { auth } from "./firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -262,7 +264,13 @@ export default function App() {
   }
 
   if (dashboardMode === "premium") {
-    return <PremiumDashboard onToggleDemo1={() => setDashboardMode("demo1")} />;
+    return (
+      <Routes>
+        <Route path="/" element={<PremiumDashboard onToggleDemo1={() => setDashboardMode("demo1")} />} />
+        <Route path="/audit/:runId" element={<AuditPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   return (

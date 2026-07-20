@@ -1,5 +1,5 @@
 export type SeverityType = "critical" | "major" | "minor" | "suggestion";
-export type CategoryType = "layout" | "typography" | "color" | "accessibility" | "custom";
+export type CategoryType = "layout" | "typography" | "color" | "spacing" | "accessibility" | "custom";
 
 export interface Project {
   id: string;

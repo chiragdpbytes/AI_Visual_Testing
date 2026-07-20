@@ -318,7 +318,7 @@ export const presetCatalog = {
     {
       id: "issue-5",
       severity: "critical",
-      category: "layout",
+      category: "spacing",
       title: "Metric Cards Overlap Grid Conflict",
       description: "Due to uneven column sizing gaps (Card 3 gets stretched width to fill content), the grid is asymmetrical and shifted upwards 10px. Spacing offsets break visual coherence.",
       xPercent: 50,
@@ -381,6 +381,17 @@ export const presetPricing = {
       yPercent: 25,
       cssSuggestion: ".pricing-subtitle {\n  color: #64748B;\n  font-size: 15px;\n}",
       estimatedImpact: "Readability for visually impaired accessibility users."
+    },
+    {
+      id: "pricing-5",
+      severity: "major",
+      category: "spacing",
+      title: "Card Gutter Spacing Compressed",
+      description: "Design defines a `32px` gutter between the three pricing cards. The developed build compiles the gutter at `12px`, causing the cards to visually crowd into each other.",
+      xPercent: 50,
+      yPercent: 65,
+      cssSuggestion: ".pricing-grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 32px;\n}",
+      estimatedImpact: "Cards read as one crowded block instead of three distinct, comparable plans."
     }
   ] as Issue[]
 };
